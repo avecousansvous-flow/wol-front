@@ -103,7 +103,7 @@
           item.className = 'machine-item';
           item.innerHTML = `
             <strong>${machine.name}</strong>
-            <button class="button machine-button" type="button" onclick="wake('${machine.id}')">
+            <button class="button machine-button" type="button" onclick="wake('${machine.id}', event)">
               Allumer
             </button>
           `;
@@ -111,17 +111,50 @@
         });
       }
 
-      window.wake = async function (id) {
+      window.wake = async function (id, event) {
+        const button = event?.target;
+
+        if (button) {
+          button.disabled = true;
+          button.textContent = 'Envoi...';
+        }
+
         const { error } = await supabase.from('wol_requests').insert({
           machine_id: id,
           status: 'pending'
         });
 
         if (error) {
+          if (button) {
+            button.disabled = false;
+            button.textContent = 'Échec';
+            button.style.backgroundColor = '#ff6b6b';
+            button.style.color = '#fff';
+          }
           alert(error.message);
-        } else {
-          alert('Demande envoyée');
+
+          setTimeout(() => {
+            if (button) {
+              button.textContent = 'Allumer';
+              button.style.backgroundColor = '';
+              button.style.color = '';
+            }
+          }, 5000);
+          return;
         }
+
+        if (button) {
+          button.textContent = 'Envoyé';
+        }
+
+        setTimeout(() => {
+          if (button) {
+            button.disabled = false;
+            button.textContent = 'Allumer';
+            button.style.backgroundColor = '';
+            button.style.color = '';
+          }
+        }, 30000);
       };
     </script>
   </body>
